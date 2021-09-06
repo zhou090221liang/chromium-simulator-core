@@ -38,7 +38,7 @@ async function _launch(options) {
         ignoreHTTPSErrors: options.ignoreHTTPSErrors != undefined ? options.ignoreHTTPSErrors : true,
         headless: options.headless != undefined ? options.headless : true,
         devtools: options.devtools != undefined ? options.devtools : false,
-        executablePath: this._executablePath || null,
+        executablePath: options.executablePath || (this._executablePath || null),
         timeout: options.timeout != undefined ? options.timeout : false,
         dumpio: options.dumpio != undefined ? options.dumpio : false,
     };
