@@ -1,2 +1,2 @@
-# chromium-simulator-core
+# chromium-simulator
 chromium-simulator

@@ -1,0 +1,20 @@
+{
+    "name": "chromium-simulator",
+    "version": "0.0.1",
+    "description": "谷歌chromium浏览器模拟器",
+    "author": "zxy<zxy@zhouxiaoyue.cn>",
+    "main": "./index.js",
+    "repository": {
+        "type": "git",
+        "location": "git@github.com:zhou090221liang/chromium-simulator.git",
+        "url": "https://github.com/zhou090221liang/chromium-simulator"
+    },
+    "keywords": [
+        "browser",
+        "chromium",
+        "simulator"
+    ],
+    "dependencies": {
+        "puppeteer-core": "^10.2.0"
+    }
+}
