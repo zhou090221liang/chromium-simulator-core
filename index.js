@@ -165,7 +165,7 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
             _self._output && console.info(`准备打开网址：${url}`);
             await page.goto(url, { waitUntil: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'] });
             if (timeout != undefined && waitFor == undefined) {
-                await page.waitFor(timeout);
+                await page.waitForTimeout(timeout);
                 if (!resolved) {
                     page.completed = true;
                     page.networks = networks;
