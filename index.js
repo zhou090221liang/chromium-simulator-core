@@ -38,7 +38,8 @@ async function _launch(options) {
         ignoreHTTPSErrors: options.ignoreHTTPSErrors != undefined ? options.ignoreHTTPSErrors : true,
         headless: options.headless != undefined ? options.headless : true,
         devtools: options.devtools != undefined ? options.devtools : false,
-        executablePath: options.executablePath || (puppeteer.executablePath() || null),
+        // executablePath: options.executablePath || (puppeteer.executablePath() || null),
+        executablePath: options.executablePath || null,
         timeout: options.timeout != undefined ? options.timeout : 30000,
         dumpio: options.dumpio != undefined ? options.dumpio : false,
     };
@@ -95,8 +96,10 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
             page = await _self._browser.newPage();
             _self._output && console.info("新建页面完成");
             await page.setRequestInterception(true);
+            _self._output && console.info("开始监听页面资源请求");
             page.on('request', async (request) => {
                 try {
+                    _self._output && console.info("拦截到资源请求：", request.url());
                     networks.push({
                         request: {
                             headers: request.headers(),
@@ -111,11 +114,14 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                         if (request.url().indexOf(netWorkConfig[i].url) > -1) {
                             if (netWorkConfig[i].responsed) {
                                 interception = true;
+                                _self._output && console.info("自定义响应", netWorkConfig[i].responsed, "给请求：", request.url());
                                 await request.respond(netWorkConfig[i].responsed);
                             } else if (netWorkConfig[i].abort) {
                                 interception = true;
+                                _self._output && console.info("请求", request.url(), "已被终止");
                                 await request.abort();
                             } else if (netWorkConfig[i].overrides) {
+                                _self._output && console.info("准备转发请求", request.url(), "至", netWorkConfig[i].overrides);
                                 overrides = netWorkConfig[i].overrides;
                             }
                             break;
@@ -123,12 +129,15 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                     }
                     if (!interception) {
                         if (overrides) {
+                            _self._output && console.info("开始转发请求", request.url(), "至", netWorkConfig[i].overrides);
                             await request.continue(overrides);
                         } else {
+                            _self._output && console.info("继续请求", request.url());
                             await request.continue();
                         }
                     }
                 } catch (e) {
+                    _self._output && console.warn("==================================请求拦截异常：", e);
                     throw e;
                 }
             });
@@ -155,21 +164,25 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                                     networks[i].response.json = JSON.parse(networks[i].response.text);
                                 } catch (e) { }
                             } catch (e) { }
+                            _self._output && console.info("收到请求", response.url(), "的响应", response.status());
                             break;
                         }
                     }
                 } catch (e) {
+                    _self._output && console.warn("==================================请求响应异常：", e);
                     throw e;
                 }
             });
             _self._output && console.info(`准备打开网址：${url}`);
             await page.goto(url, { waitUntil: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'] });
+            _self._output && console.info(`网址：${url}被打开`);
             if (timeout != undefined && waitFor == undefined) {
                 await page.waitForTimeout(timeout);
+                _self._output && console.info(`等待时间${timeout}已到`);
                 if (!resolved) {
                     page.completed = true;
                     page.networks = networks;
-                    resolve([page]);
+                    resolve(page);
                     resolved = true;
                 }
             } else {
@@ -179,6 +192,7 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                         timeout,
                         waitUntil: waitFor
                     });
+                    _self._output && console.info(`事件${waitFor}已完成`);
                     if (!resolved) {
                         page.completed = true;
                         page.networks = networks;
@@ -189,6 +203,7 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                     await page.waitForSelector(waitFor, {
                         timeout
                     });
+                    _self._output && console.info(`选择器${waitFor}已捕获`);
                     if (!resolved) {
                         page.completed = true;
                         page.networks = networks;
@@ -198,7 +213,9 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                 }
             }
         } catch (e) {
+            _self._output && console.warn(`打开网页发生异常：`, e);
             if (!forceNetwork) {
+                _self._output && console.info(`强制响应目前的数据`);
                 reject(e);
             } else {
                 if (!resolved) {
