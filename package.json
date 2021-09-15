@@ -1,6 +1,6 @@
 {
     "name": "chromium-simulator-core",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "谷歌chromium浏览器模拟器",
     "author": "zxy<zxy@zhouxiaoyue.cn>",
     "main": "./index.js",

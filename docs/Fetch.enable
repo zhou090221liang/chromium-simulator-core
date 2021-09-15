@@ -10,4 +10,10 @@ Error: Protocol error (Fetch.enable): 'Fetch.enable' wasn't found
 
 原因：page.setRequestInterception(true)
 
-解决办法：暂无！
+解决办法（暂时没有解决办法，疑似修改一行源码，可以解决，但目前没有发现修改后有什么异常）：
+puppeteer/lib/cjs/puppeteer/common/NetworkManager.js 
+170行代码注释
+this._client.send('Fetch.enable', {
+    handleAuthRequests: true,
+    patterns: [{ urlPattern: '*' }],
+}),
