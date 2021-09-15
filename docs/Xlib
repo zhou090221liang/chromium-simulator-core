@@ -1,0 +1,3 @@
+[0915/144417.061204:ERROR:browser_main_loop.cc(595)] Failed to put Xlib into threaded mode.
+
+此异常可以忽略

@@ -88,6 +88,11 @@ async function _close() {
  */
 function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNetwork = true) {
     const _self = this;
+    if (netWorkConfig && netWorkConfig.length) {
+        _self._requestInterception = true;
+    } else {
+        _self._requestInterception = false;
+    }
     const networks = [];
     let resolved = false;
     let page;
@@ -95,12 +100,13 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
         try {
             page = await _self._browser.newPage();
             _self._output && console.info("新建页面完成");
-            await page.setRequestInterception(true);
+            if (_self._requestInterception) {
+                await page.setRequestInterception(true);
+            }
             _self._output && console.info("开始监听页面资源请求");
             page.on('request', async (request) => {
                 try {
-                    _self._output && console.info("拦截到资源请求：", request.url());
-                    networks.push({
+                    const _requestObj = {
                         request: {
                             headers: request.headers(),
                             method: request.method(),
@@ -108,36 +114,42 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                             resourceType: request.resourceType(),
                             url: request.url()
                         }
-                    });
-                    let interception = false, overrides = null;
-                    for (let i = 0; i < netWorkConfig.length; i++) {
-                        if (request.url().indexOf(netWorkConfig[i].url) > -1) {
-                            if (netWorkConfig[i].responsed) {
-                                interception = true;
-                                _self._output && console.info("自定义响应", netWorkConfig[i].responsed, "给请求：", request.url());
-                                await request.respond(netWorkConfig[i].responsed);
-                            } else if (netWorkConfig[i].abort) {
-                                interception = true;
-                                _self._output && console.info("请求", request.url(), "已被终止");
-                                await request.abort();
-                            } else if (netWorkConfig[i].overrides) {
-                                _self._output && console.info("准备转发请求", request.url(), "至", netWorkConfig[i].overrides);
-                                overrides = netWorkConfig[i].overrides;
+                    };
+                    _self._output && console.info("拦截到资源请求：", _requestObj.request.url);
+                    if (_self._requestInterception) {
+                        let interception = false, overrides = null;
+                        for (let i = 0; i < netWorkConfig.length; i++) {
+                            if (_requestObj.request.url.indexOf(netWorkConfig[i].url) > -1) {
+                                if (netWorkConfig[i].responsed) {
+                                    interception = true;
+                                    _self._output && console.info("自定义响应", netWorkConfig[i].responsed, "给请求：", _requestObj.request.url);
+                                    _requestObj.response = netWorkConfig[i].responsed;
+                                    await request.respond(netWorkConfig[i].responsed);
+                                } else if (netWorkConfig[i].abort) {
+                                    interception = true;
+                                    _self._output && console.info("请求", _requestObj.request.url, "已被终止");
+                                    _requestObj.response = null;
+                                    await request.abort();
+                                } else if (netWorkConfig[i].overrides) {
+                                    _self._output && console.info("准备转发请求", _requestObj.request.url, "至", netWorkConfig[i].overrides);
+                                    overrides = netWorkConfig[i].overrides;
+                                }
+                                break;
                             }
-                            break;
+                        }
+                        if (!interception) {
+                            if (overrides) {
+                                _self._output && console.info("开始转发请求", _requestObj.request.url, "至", netWorkConfig[i].overrides);
+                                await request.continue(overrides);
+                            } else {
+                                _self._output && console.info("继续请求", _requestObj.request.url);
+                                await request.continue();
+                            }
                         }
                     }
-                    if (!interception) {
-                        if (overrides) {
-                            _self._output && console.info("开始转发请求", request.url(), "至", netWorkConfig[i].overrides);
-                            await request.continue(overrides);
-                        } else {
-                            _self._output && console.info("继续请求", request.url());
-                            await request.continue();
-                        }
-                    }
+                    networks.push(_requestObj);
                 } catch (e) {
-                    _self._output && console.warn("==================================请求拦截异常：", e);
+                    _self._output && console.warn("请求拦截异常：", e);
                     throw e;
                 }
             });
@@ -169,7 +181,7 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
                         }
                     }
                 } catch (e) {
-                    _self._output && console.warn("==================================请求响应异常：", e);
+                    _self._output && console.warn("请求响应异常：", e);
                     throw e;
                 }
             });

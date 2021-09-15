@@ -3,10 +3,10 @@ const url = "https://";
 (async function () {
     //实例化一个模拟器
     const executablePath = "/usr/bin/chromium-browser";
-    const browser = new browser_simulator();
+    const browser = new browser_simulator(true);
     //启动浏览器
     await browser.launch({
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--no-gpu", "--disable-gpu"],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
         executablePath,
         dumpio: true
     });
@@ -16,7 +16,7 @@ const url = "https://";
         page = await browser.open(url, [{
             url: "/static/pingbi.js",
             abort: true
-        }]);
+        }], null, 10, true);
     } catch (e) {
         console.warn("打开网页异常：", e);
     } finally {

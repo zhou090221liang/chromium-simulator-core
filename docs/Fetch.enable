@@ -1,0 +1,13 @@
+Error: Protocol error (Fetch.enable): 'Fetch.enable' wasn't found
+    at /chromium-simulator/node_modules/puppeteer-core/lib/cjs/puppeteer/common/Connection.js:217:63
+    at new Promise (<anonymous>)
+    at CDPSession.send (/chromium-simulator/node_modules/puppeteer-core/lib/cjs/puppeteer/common/Connection.js:216:16)
+    at NetworkManager._updateProtocolRequestInterception (/chromium-simulator/node_modules/puppeteer-core/lib/cjs/puppeteer/common/NetworkManager.js:170:30)
+    at NetworkManager.setRequestInterception (/chromium-simulator/node_modules/puppeteer-core/lib/cjs/puppeteer/common/NetworkManager.js:160:20)
+    at Page.setRequestInterception (/chromium-simulator/node_modules/puppeteer-core/lib/cjs/puppeteer/common/Page.js:399:52)
+    at /chromium-simulator/node_modules/chromium-simulator-core/index.js:98:24
+    at processTicksAndRejections (internal/process/task_queues.js:95:5)
+
+原因：page.setRequestInterception(true)
+
+解决办法：暂无！
