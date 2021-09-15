@@ -3,9 +3,13 @@ const url = "https://";
 (async function () {
     //实例化一个模拟器
     const executablePath = "/usr/bin/chromium-browser";
-    const browser = new browser_simulator(executablePath);
+    const browser = new browser_simulator();
     //启动浏览器
-    await browser.launch();
+    await browser.launch({
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--no-gpu", "--disable-gpu"],
+        executablePath,
+        dumpio: true
+    });
     //打开指定网页
     let page;
     try {
@@ -19,7 +23,11 @@ const url = "https://";
         //关闭导航页
         page.completed && await page.close();
     }
-    // console.log("该网页的所有请求", page.networks);
+    if (page && page.networks && page.networks.length) {
+        console.log("该网页的第一个请求", page.networks[0]);
+    } else {
+        console.warn("no request");
+    }
     //关闭浏览器
     await browser.close();
 })();

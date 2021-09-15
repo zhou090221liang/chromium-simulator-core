@@ -7,13 +7,10 @@ const puppeteer = require('puppeteer-core');
 module.exports = class {
     /**
      * 实例化一个浏览器对象
-     * @param {String} executablePath 可运行 Chromium 或 Chrome 可执行文件的路径，而不是绑定的 Chromium。\
-     * 如果 executablePath 是一个相对路径，那么他相对于 当前工作路径 解析。\
      * @param {Boolean} output 是否输出信息，默认false
      * @return {Object} 浏览器操作对象
      */
-    constructor(executablePath, output = false) {
-        this._executablePath = executablePath || puppeteer.executablePath();
+    constructor(output = false) {
         this._output = output != undefined ? output : false;
         this.launch = _launch;
         this.open = _open;
@@ -29,6 +26,9 @@ module.exports = class {
  * ignoreHTTPSErrors:<Boolean> 是否在导航期间忽略 HTTPS 错误. 默认是 true。\
  * headless:<Boolean> 是否以 无头模式 运行浏览器。默认是 true，除非 devtools 选项是 true。\
  * devtools:<Boolean> 是否为每个选项卡自动打开DevTools面板。如果这个选项是 true，headless 选项将会设置成 false。\
+ * executablePath:<String> 可运行 Chromium 或 Chrome 可执行文件的路径，而不是绑定的 Chromium。\
+ * 如果 executablePath 是一个相对路径，那么他相对于 当前工作路径 解析。\
+ * 通常情况下，该参数只有在使用core包时，才需要指定。\
  * timeout:<Number> 等待浏览器实例启动的最长时间（以毫秒为单位）。默认是 30000 (30 秒). 通过 0 来禁用超时。
  */
 async function _launch(options) {
@@ -38,8 +38,8 @@ async function _launch(options) {
         ignoreHTTPSErrors: options.ignoreHTTPSErrors != undefined ? options.ignoreHTTPSErrors : true,
         headless: options.headless != undefined ? options.headless : true,
         devtools: options.devtools != undefined ? options.devtools : false,
-        executablePath: options.executablePath || (this._executablePath || null),
-        timeout: options.timeout != undefined ? options.timeout : false,
+        executablePath: options.executablePath || (puppeteer.executablePath() || null),
+        timeout: options.timeout != undefined ? options.timeout : 30000,
         dumpio: options.dumpio != undefined ? options.dumpio : false,
     };
     if (this._browser) {
