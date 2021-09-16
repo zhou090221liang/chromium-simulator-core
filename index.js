@@ -29,8 +29,8 @@ module.exports = class {
  * executablePath:<String> 可运行 Chromium 或 Chrome 可执行文件的路径，而不是绑定的 Chromium。\
  * 如果 executablePath 是一个相对路径，那么他相对于 当前工作路径 解析。\
  * 通常情况下，该参数只有在使用core包时，才需要指定。\
- * timeout:<Number> 等待浏览器实例启动的最长时间（以毫秒为单位）。默认是 30000 (30 秒). 通过 0 来禁用超时。
- * dumpio:<Boolean> 是否将浏览器进程标准输出和标准错误输入到 process.stdout 和 process.stderr 中。默认是 false。
+ * timeout:<Number> 等待浏览器实例启动的最长时间（以毫秒为单位）。默认是 30000 (30 秒). 通过 0 来禁用超时。\
+ * dumpio:<Boolean> 是否将浏览器进程标准输出和标准错误输入到 process.stdout 和 process.stderr 中。默认是 false。\
  * ignoreDefaultArgs:<Array<String>> 如果给出了数组，则过滤掉给定的默认参数。这个选项请谨慎使用。默认为 ["--enable-automation"]。
  */
 async function _launch(options) {
@@ -106,7 +106,20 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
             _self._output && console.info("新建页面完成");
             if (isMobile) {
                 await page.emulate(puppeteer.devices['iPhone 11']);
-                await page.evaluateOnNewDocument(require('fs').readFileSync('./libs/mobile.js', 'utf8'));
+                const javascript = ` \
+                    const iPhone = { \
+                        "platform": "iPhone", \
+                        "appCodeName": "Mozilla", \
+                        "appName": "Netscape", \
+                        "appVersion": "5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Mobile/15E148 Safari/604.1", \
+                        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Mobile/15E148 Safari/604.1" \
+                    }; \
+                    Object.defineProperty(navigator, 'platform', { get: function () { return iPhone.platform; } }); \
+                    Object.defineProperty(navigator, 'appName', { get: function () { return iPhone.appName; } }); \
+                    Object.defineProperty(navigator, 'appCodeName', { get: function () { return iPhone.appCodeName; } }); \
+                    Object.defineProperty(navigator, 'appVersion', { get: function () { return iPhone.appVersion; } }); \
+                `;
+                await page.evaluateOnNewDocument(javascript);
                 _self._output && console.info("设置移动设备完成");
             }
             if (_self._requestInterception) {
