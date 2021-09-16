@@ -17,3 +17,5 @@ this._client.send('Fetch.enable', {
     handleAuthRequests: true,
     patterns: [{ urlPattern: '*' }],
 }),
+
+这个解决方法会有一个弊端，捕获的请求会只有一部分。

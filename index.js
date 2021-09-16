@@ -30,6 +30,8 @@ module.exports = class {
  * 如果 executablePath 是一个相对路径，那么他相对于 当前工作路径 解析。\
  * 通常情况下，该参数只有在使用core包时，才需要指定。\
  * timeout:<Number> 等待浏览器实例启动的最长时间（以毫秒为单位）。默认是 30000 (30 秒). 通过 0 来禁用超时。
+ * dumpio:<Boolean> 是否将浏览器进程标准输出和标准错误输入到 process.stdout 和 process.stderr 中。默认是 false。
+ * ignoreDefaultArgs:<Array<String>> 如果给出了数组，则过滤掉给定的默认参数。这个选项请谨慎使用。默认为 ["--enable-automation"]。
  */
 async function _launch(options) {
     options = options || {};
@@ -42,6 +44,7 @@ async function _launch(options) {
         executablePath: options.executablePath || null,
         timeout: options.timeout != undefined ? options.timeout : 30000,
         dumpio: options.dumpio != undefined ? options.dumpio : false,
+        ignoreDefaultArgs: options.ignoreDefaultArgs || ["--enable-automation"]
     };
     if (this._browser) {
         await this._browser.close();
@@ -83,10 +86,11 @@ async function _close() {
  * abort - <Boolean> 直接终止该请求 \
  * responsed - <JOSN> 直接响应指定的信息，如： {status: 404, contentType: 'text/plain', body: 'Not Found!'} \
  * overrides - <JSON> 重定向请求，如：{url:"<string>重定向的url",method:"GET或POST",postData:"请求要提交的数据",headers:{}} \
- * 注意：abort或responsed或overrides只允许出现其中一个，overrides将重定向请求并继续发起请求，其他2种方式不会发起请求。
+ * 注意：abort或responsed或overrides只允许出现其中一个，overrides将重定向请求并继续发起请求，其他2种方式不会发起请求。\
+ * isMobile - <Boolean> 是否模拟移动浏览器，目前通过修改navigator来实现，稳定性未知，暂不支持meta和touch
  * @returns <JSON> 包含page对象和network监听
  */
-function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNetwork = true) {
+function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNetwork = true, isMobile = false) {
     const _self = this;
     if (netWorkConfig && netWorkConfig.length) {
         _self._requestInterception = true;
@@ -100,10 +104,21 @@ function _open(url, netWorkConfig = [], waitFor = null, timeout = 30000, forceNe
         try {
             page = await _self._browser.newPage();
             _self._output && console.info("新建页面完成");
+            if (isMobile) {
+                await page.emulate(puppeteer.devices['iPhone 11']);
+                await page.evaluateOnNewDocument(require('fs').readFileSync('./libs/mobile.js', 'utf8'));
+                _self._output && console.info("设置移动设备完成");
+            }
             if (_self._requestInterception) {
                 await page.setRequestInterception(true);
+                _self._output && console.info("开始监听页面资源请求");
             }
-            _self._output && console.info("开始监听页面资源请求");
+            page.on("load", async function () {
+                _self._output && console.info("触发load");
+            });
+            page.on("domcontentloaded", async function () {
+                _self._output && console.info("触发domcontentloaded");
+            });
             page.on('request', async (request) => {
                 try {
                     const _requestObj = {
